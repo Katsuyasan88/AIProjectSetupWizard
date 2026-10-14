@@ -1,0 +1,16 @@
+{
+  "name": "project-setup-wizard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code と Codex で進める案件に、AI の運用ルール一式を生成・更新する CLI と Skill (Node 22 標準ライブラリのみ)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "cli": "node scripts/cli.mjs",
+    "sync-skills": "node scripts/sync-agent-skills.mjs"
+  },
+  "license": "MIT"
+}

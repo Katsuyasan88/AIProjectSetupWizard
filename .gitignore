@@ -1,0 +1,21 @@
+# 依存 (このツール自体は追加の依存を持たない)
+node_modules/
+
+# Claude Code の個人設定 (Skill は .claude/skills/ に入れてコミットする)
+.claude/settings.local.json
+.claude/worktrees/
+
+# 会話ログ・一時ファイル
+*.jsonl
+*.log
+.psw-backup/
+
+# 手元で作った設定や生成物 (案件の設定は案件側か、このリポジトリの外に置く)
+*.setup.json
+!examples/*.json
+
+# OS / エディタ
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

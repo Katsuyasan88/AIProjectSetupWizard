@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "name": "SampleNotes",
+  "purpose": "個人用のメモを素早く記録し、後から検索できるようにする。",
+  "mvp": "テキストメモの追加・一覧・全文検索がローカルで動く。",
+  "outOfScope": [
+    "複数ユーザー間の共有",
+    "クラウド同期"
+  ],
+  "phases": [
+    "メモの追加と一覧",
+    "全文検索",
+    "タグ付け"
+  ],
+  "tech": "",
+  "verifyCommands": [
+    "node --test"
+  ],
+  "mode": "codex-led",
+  "handoff": "manual",
+  "permissions": {
+    "allowedPaths": [
+      "src/",
+      "test/"
+    ],
+    "forbidden": [
+      "外部サービスへの送信",
+      "依存パッケージの追加 (承認なし)"
+    ]
+  },
+  "projectRules": [
+    "レビューの結果は reviews/ に 1 課題 1 ファイルで残す"
+  ],
+  "handover": [],
+  "ai": {
+    "codex": {
+      "model": "",
+      "effort": "",
+      "fallbackModels": []
+    },
+    "claude": {
+      "model": "",
+      "effort": "",
+      "fallbackModels": []
+    }
+  },
+  "gitignore": true,
+  "profile": "standard",
+  "pushPolicy": "approval",
+  "launchPolicy": "lead-launch",
+  "uiRules": false,
+  "layout": "folders"
+}

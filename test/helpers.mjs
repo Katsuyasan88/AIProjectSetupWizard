@@ -29,6 +29,7 @@ export function baseConfig(overrides = {}) {
     name: 'TestApp',
     purpose: 'テスト用の目的',
     mvp: 'テスト用の MVP',
+    audience: 'personal',
     outOfScope: ['共有機能'],
     phases: ['段階A', '段階B'],
     tech: '',

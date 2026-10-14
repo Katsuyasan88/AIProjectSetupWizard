@@ -3,6 +3,7 @@
   "name": "SampleNotes",
   "purpose": "個人用のメモを素早く記録し、後から検索できるようにする。",
   "mvp": "テキストメモの追加・一覧・全文検索がローカルで動く。",
+  "audience": "personal",
   "outOfScope": [
     "複数ユーザー間の共有",
     "クラウド同期"
@@ -49,5 +50,6 @@
   "pushPolicy": "approval",
   "launchPolicy": "lead-launch",
   "uiRules": false,
+  "envSplit": false,
   "layout": "folders"
 }

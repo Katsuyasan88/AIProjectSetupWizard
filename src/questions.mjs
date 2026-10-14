@@ -1,6 +1,6 @@
 // 質問→回答の要約→確認→JSON 保存。無人モードでは質問を待たず要確認を記録する。
 import readline from 'node:readline';
-import { MODE_NAMES, MODES } from './constants.mjs';
+import { MODE_NAMES, MODES, AUDIENCE_NAMES } from './constants.mjs';
 import { validateConfig, REQUIRED_FIELDS } from './config.mjs';
 import { stableStringify } from './text.mjs';
 import { AI_EFFORTS, normalizeAiPreferences } from './ai-preferences.mjs';
@@ -9,6 +9,7 @@ export const QUESTIONS = Object.freeze([
   { key: 'name', label: '案件名', required: true, kind: 'text' },
   { key: 'purpose', label: '目的 (何のための製品か)', required: true, kind: 'text' },
   { key: 'mvp', label: 'MVP (最初に動くと言える最小の範囲)', required: true, kind: 'text' },
+  { key: 'audience', label: '利用範囲 (personal: 自分用 / company: 会社用 / public: 公開 = アプリとして一般の人が使う)', required: true, kind: 'choice', choices: AUDIENCE_NAMES },
   { key: 'outOfScope', label: '対象外 (1 行ずつ、空行で終了)', required: false, kind: 'list' },
   { key: 'phases', label: '段階 (1 行ずつ、空行で終了)', required: false, kind: 'list' },
   { key: 'tech', label: '技術 (未定なら空)', required: false, kind: 'text' },
@@ -39,6 +40,7 @@ export function emptyAnswers() {
     name: '',
     purpose: '',
     mvp: '',
+    audience: '',
     outOfScope: [],
     phases: [],
     tech: '',

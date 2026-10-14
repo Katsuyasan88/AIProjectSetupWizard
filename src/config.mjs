@@ -1,6 +1,6 @@
 // 設定 JSON の読み込み・検証・正規化。入力はデータとして扱い、指示へ昇格させない。
 import fs from 'node:fs';
-import { MODES, MODE_NAMES, HANDOFFS, SCHEMA_VERSION } from './constants.mjs';
+import { MODES, MODE_NAMES, HANDOFFS, AUDIENCE_NAMES, SCHEMA_VERSION } from './constants.mjs';
 import { sanitizeText } from './text.mjs';
 import { normalizeAiPreferences } from './ai-preferences.mjs';
 import { PROFILES, DEFAULT_PROFILE, PUSH_POLICIES, DEFAULT_PUSH_POLICY, LAUNCH_POLICIES, DEFAULT_LAUNCH_POLICY, SOLO_LAUNCH_POLICY } from './render-profile.mjs';
@@ -15,7 +15,7 @@ export class ConfigError extends Error {
 }
 
 // 受け付けるキー (これ以外は拒否: 秘密らしい設定値の紛れ込み防止)
-export const STRING_FIELDS = ['name', 'purpose', 'mvp', 'tech', 'mode', 'handoff'];
+export const STRING_FIELDS = ['name', 'purpose', 'mvp', 'tech', 'mode', 'handoff', 'audience'];
 export const LIST_FIELDS = ['outOfScope', 'phases', 'verifyCommands', 'projectRules', 'handover'];
 export const KNOWN_KEYS = new Set([
   'schemaVersion',
@@ -28,6 +28,7 @@ export const KNOWN_KEYS = new Set([
   'pushPolicy',
   'launchPolicy',
   'uiRules',
+  'envSplit',
   'layout',
   'notes',
 ]);
@@ -38,6 +39,7 @@ export const REQUIRED_FIELDS = Object.freeze([
   { key: 'purpose', label: '目的' },
   { key: 'mvp', label: 'MVP' },
   { key: 'mode', label: 'モード' },
+  { key: 'audience', label: '利用範囲' },
 ]);
 
 // 任意欄 (空でも止まらない。未定として記録)
@@ -191,6 +193,7 @@ export function validateConfig(raw) {
     handover: [],
     mode: '',
     handoff: 'manual',
+    audience: '',
     permissions: { allowedPaths: [], forbidden: [] },
     notes: '',
     ai: normalizeAiPreferences(),
@@ -199,6 +202,7 @@ export function validateConfig(raw) {
     pushPolicy: DEFAULT_PUSH_POLICY,
     launchPolicy: DEFAULT_LAUNCH_POLICY,
     uiRules: false,
+    envSplit: false,
     layout: DEFAULT_LAYOUT,
   };
 
@@ -224,6 +228,12 @@ export function validateConfig(raw) {
   if (raw.uiRules !== undefined && raw.uiRules !== null) {
     if (typeof raw.uiRules !== 'boolean') errors.push('uiRules: true / false で指定してください');
     else cfg.uiRules = raw.uiRules;
+  }
+
+  // 開発用と本番用を分けるか (true なら「開発用と本番用」の節を入れる。既定は入れない)
+  if (raw.envSplit !== undefined && raw.envSplit !== null) {
+    if (typeof raw.envSplit !== 'boolean') errors.push('envSplit: true / false で指定してください');
+    else cfg.envSplit = raw.envSplit;
   }
 
   // 運用の段階: minimal / standard / full (未指定は standard)
@@ -266,6 +276,12 @@ export function validateConfig(raw) {
   } else {
     cfg.mode = mode;
   }
+
+  // 利用範囲: personal (自分用) / company (会社用) / public (公開)。必須で、既定はない (未回答は要確認)
+  const audience = typeof raw.audience === 'string' ? raw.audience.trim() : '';
+  if (raw.audience !== undefined && raw.audience !== null && typeof raw.audience !== 'string') errors.push('audience: 文字列で指定してください');
+  else if (audience && !AUDIENCE_NAMES.includes(audience)) errors.push(`audience は ${AUDIENCE_NAMES.join(' | ')} のいずれかです`);
+  else cfg.audience = audience;
 
   // handoff
   const handoffRaw = raw.handoff === undefined || raw.handoff === null || raw.handoff === '' ? undefined : String(raw.handoff).trim();

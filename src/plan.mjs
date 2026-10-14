@@ -1,5 +1,5 @@
 // plan: 設定から生成予定ファイルと digest を決定的に計算する (書き込みなし)。
-import { MODES, ENTRY_FILE, TEMPLATE_VERSION, CONFIG_FILE_NAME, RULES_FILE_NAME, GITIGNORE_FILE_NAME } from './constants.mjs';
+import { MODES, ENTRY_FILE, AUDIENCES, TEMPLATE_VERSION, CONFIG_FILE_NAME, RULES_FILE_NAME, GITIGNORE_FILE_NAME } from './constants.mjs';
 import { hasRequiredMissing } from './config.mjs';
 import { layoutOf, placeOf, applyLayout } from './layout.mjs';
 import { MANIFEST_FILE_NAME } from './constants.mjs';
@@ -64,6 +64,8 @@ export function buildPlan(validated) {
     pushPolicy: pushPolicyOf(cfg),
     launchPolicy: launchPolicyOf(cfg),
     uiRules: cfg.uiRules === true,
+    envSplit: cfg.envSplit === true,
+    audience: cfg.audience,
     layout,
     manifestPath: placeOf(MANIFEST_FILE_NAME, layout),
     handoff: cfg.handoff,
@@ -97,7 +99,7 @@ export function digestMatches(given, actual) {
 
 export function planSummary(plan) {
   const lines = [];
-  lines.push(`mode: ${plan.mode || '(未回答)'}  handoff: ${plan.handoff}  profile: ${plan.profile}  push: ${plan.pushPolicy === 'work-branch' ? '作業ブランチへは承認なし' : '毎回承認'}  別AIの起動: ${plan.launchPolicy === 'lead-launch' ? '主導担当が範囲内で起動してよい' : '毎回承認'}  画面の決まり: ${plan.uiRules ? '入れる' : '入れない'}`);
+  lines.push(`mode: ${plan.mode || '(未回答)'}  利用範囲: ${AUDIENCES[plan.audience] ?? '(未回答)'}  handoff: ${plan.handoff}  profile: ${plan.profile}  push: ${plan.pushPolicy === 'work-branch' ? '作業ブランチへは承認なし' : '毎回承認'}  別AIの起動: ${plan.launchPolicy === 'lead-launch' ? '主導担当が範囲内で起動してよい' : '毎回承認'}  画面の決まり: ${plan.uiRules ? '入れる' : '入れない'}  開発用と本番用: ${plan.envSplit ? '分ける' : '分けない'}`);
   for (const agent of MODES[plan.mode]?.agents ?? []) {
     const preference = plan.ai?.[agent.toLowerCase()];
     lines.push(`${agent}: model ${preference?.model || '(既定)'} / effort ${preference?.effort || '(既定)'}${preference?.fallbackModels?.length ? ` / 代わり ${preference.fallbackModels.join(' → ')}` : ''}`);

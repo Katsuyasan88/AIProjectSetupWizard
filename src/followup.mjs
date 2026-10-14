@@ -4,7 +4,7 @@
 // 課題の ID は発行しない (発行するのは案件の主導担当)。作業文書なので担当名 (Codex / Claude) は書かない。
 import { TEMPLATE_VERSION, WORKING_DOCS } from './constants.mjs';
 import { validateConfig } from './config.mjs';
-import { PROFILES, profileOf, launchPolicyOf, pushPolicyOf, isStandard, LAUNCH_SECTION_NAME } from './render-profile.mjs';
+import { PROFILES, profileOf, launchPolicyOf, pushPolicyOf, isStandard, audienceLabel, LAUNCH_SECTION_NAME } from './render-profile.mjs';
 import { baseName } from './layout.mjs';
 
 export const FOLLOWUP_HEADING = '## ウィザード更新後の対応';
@@ -33,6 +33,9 @@ export function settingFollowups(oldCfg, newCfg) {
   if (oldCfg.mode !== newCfg.mode) {
     out.push('- 役割の変更: 課題表・再開メモ・レビューの記録にある担当の記述を、新しい分担に合わせて見直す。一方の AI だけが使える Skill や設定は、新しい分担で使える形に移す案をユーザーに示す (変更は承認後)。');
   }
+  if (newCfg.audience && oldCfg.audience !== newCfg.audience) {
+    out.push(`- 利用範囲: 「${audienceLabel(newCfg)}」になった。WORKFLOW.md の「利用範囲」を読み、いまのコード・文書・履歴に合わないもの (公開なら利用者に届くものに入った秘密や管理用の情報と、決まっていない個人情報の扱い、会社用なら社外へ出ている会社の情報) がないかを確かめ、直す作業をユーザーに示す。`);
+  }
   if (launchPolicyOf(oldCfg) !== launchPolicyOf(newCfg)) {
     if (launchPolicyOf(newCfg) === 'lead-launch') {
       out.push(`- 別AIの起動: 起動の手段と、範囲が WORKFLOW.md の「${LAUNCH_SECTION_NAME}」のとおりでよいかをユーザーに確かめ、初期確認の承認記録に書く。`);
@@ -41,6 +44,10 @@ export function settingFollowups(oldCfg, newCfg) {
     } else {
       out.push('- 別AIの起動: 毎回承認に戻った。承認記録や再開メモに残る継続的な起動の承認は使えないので、ユーザーに確かめたうえで、その旨を書き添える。');
     }
+  }
+  if (newCfg.envSplit === true && oldCfg.envSplit !== true) {
+    out.push(`- 開発用と本番用: それぞれの場所と切り替え方をユーザーに確かめ、${context} に書く (秘密の値は書かない。本番がまだなければ未作成と書く)。`);
+    out.push('- 開発用と本番用: いまの認証・設定・接続先・データ・秘密情報・ログが開発用と本番用で共有されていないかを確かめ、分ける作業をユーザーに示す。');
   }
   if (newCfg.uiRules === true && oldCfg.uiRules !== true) {
     out.push(`- 画面の実装の基本: デザインルールをユーザーと決め、決まったことを \`docs/\` のデザインルールの文書に書いて正本にする (文書がなければ、最初に決まったときに作る。決まっていないことを推測で書かない)。場所を ${context} に書く。`);

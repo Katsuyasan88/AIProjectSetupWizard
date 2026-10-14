@@ -4,7 +4,7 @@
 //   full     : さらに、検討から課題までの流れ、完了の記録と索引、公開・費用・引き継ぎの境界を足す
 // 実運用で育った案件の決まりを、案件名・製品の内容・個別の承認を除いて一般化したもの。
 // 作業文書 (TASKS / USER_TESTS / BACKLOG / CONTEXT) には担当名を書かない (役割を変えても古くならない)。
-import { MODES, ENTRY_FILE } from './constants.mjs';
+import { MODES, ENTRY_FILE, AUDIENCES } from './constants.mjs';
 import { oneLine } from './text.mjs';
 
 export const PROFILES = Object.freeze(['minimal', 'standard', 'full']);
@@ -118,6 +118,68 @@ export function launchSection(cfg) {
 const LAUNCH_CONFIRM = `実装担当の起動: 起動の手段と、範囲が WORKFLOW.md の「${LAUNCH_SECTION_NAME}」のとおりでよいか`;
 export const launchConfirmLine = (cfg) => (launchPolicyOf(cfg) === 'lead-launch' ? LAUNCH_CONFIRM : '');
 
+// ---------- 利用範囲 (設定の audience。必須) ----------
+//   personal : 自分用。使うのはユーザー本人だけ
+//   company  : 会社用。社内で使う。会社の情報を社外へ出さない
+//   public   : 公開。アプリとして一般の人が使う・見る
+export const AUDIENCE_HEADING = '## 利用範囲';
+export const audienceLabel = (cfg) => AUDIENCES[cfg?.audience] ?? '';
+const AUDIENCE_RULES = Object.freeze({
+  personal: [
+    '使うのはユーザー本人だけ。',
+    'ほかの人に配る・社内で共有する・公開するときは、その前にユーザーが /project-change で利用範囲を変える。自分用のまま配らない。',
+  ],
+  company: [
+    '社内で使う。会社の情報 (社内の資料、顧客や取引先の情報、社内のサーバー名やパス) を、社外のサービスや公開の場所へ送らない・書かない。',
+    '会社の決まり (情報の扱い、使ってよい外部サービスや AI、ライセンス) に従う。分からないことは推測せず、ユーザーに確かめる。',
+    '依存やほかのコードを取り込むときは、ライセンスが社内の利用に合うかを確かめてから提案する。',
+  ],
+  public: [
+    'アプリとして一般の人が使う・見る。利用者は知らない人で、想定外の入力や使い方をする前提で作る (入力の検証、エラー時の表示、権限のない操作を通さない)。',
+    '利用者の個人情報や入力を扱うときは、集める範囲を最小にする。保存先・保存期間・見られる人を決めてからユーザーに確かめる。プライバシーポリシーや利用規約が要るかもユーザーに確かめる (中身を推測で書かない)。',
+    '利用者に届くもの (画面、配布物、公開の設定) に、秘密・管理用の情報・手元の環境のパスや名前を入れない。',
+    '公開・配布・リリースは「承認の扱い」のとおり、毎回ユーザーの明示承認を取る。この設定は公開の承認ではない。',
+  ],
+});
+export function audienceSection(cfg) {
+  const label = audienceLabel(cfg);
+  if (!label) return `${AUDIENCE_HEADING}
+
+- 利用範囲: (未回答: 必須) — 決まるまで、ほかの人に配る・公開する作業をしない。
+
+`;
+  const rules = AUDIENCE_RULES[cfg.audience].map((r) => `- ${r}`).join('\n');
+  return `${AUDIENCE_HEADING}
+
+- 利用範囲: ${label} (この案件の設定。変えるときはユーザーが /project-change を実行する)
+${rules}
+
+`;
+}
+
+// ---------- 開発用と本番用 (設定の envSplit。分ける案件だけ) ----------
+// staging などの中間の環境は扱わない (必要な案件は、案件固有のルールで足す)
+export const ENV_SECTION_NAME = '開発用と本番用';
+export const hasEnvSplit = (cfg) => cfg?.envSplit === true;
+const ENV_CONTEXT_HEADING = '## 開発用と本番用の場所・切り替え方';
+export function envSection(cfg) {
+  if (!hasEnvSplit(cfg)) return '';
+  const where = isStandard(cfg) ? `${L.CONTEXT} の「開発用と本番用の場所・切り替え方」` : `${L.TASKS} の再開メモ`;
+  return `## ${ENV_SECTION_NAME}
+
+- この案件は、開発用と本番用 (利用者が使うもの) を分ける。認証・設定・接続先・データ・秘密情報・ログを分け、共有しない。
+- 作業と検証は開発用で行う。本番に対する操作 (反映、データの変更や削除、設定の変更) は、今回の操作へのユーザーの明示承認を取ってから行う。開発用での承認や合格を、本番の承認と読み替えない。
+- 本番のデータを開発用にコピーしない。調べるのに必要なときは、範囲と扱い (伏せる項目、消す時期) をユーザーに確かめる。
+- 本番への反映は、対象・差分・検証の結果・戻し方をそろえてから承認を得る。
+- 操作や検証の記録には、どちらに対して行ったかを書く。どちらか分からないときは操作しない。
+- 開発用と本番用の場所と切り替え方は、初期確認でユーザーに確かめ、${where} に書く (秘密の値は書かない)。本番がまだなければ「未作成」と書く。
+
+`;
+}
+const ENV_CONFIRM = '開発用と本番用: それぞれの場所と切り替え方 (本番がまだなければ、未作成と記録する)';
+export const envConfirmLine = (cfg) => (hasEnvSplit(cfg) ? ENV_CONFIRM : '');
+export const envEntryLine = (cfg) => (hasEnvSplit(cfg) ? `- 本番に触れる前: ${L.WORKFLOW} の「${ENV_SECTION_NAME}」。どちらへの操作かを確かめる。\n` : '');
+
 // ---------- 画面の実装の基本 (設定の uiRules。画面のある案件だけ) ----------
 export const UI_SECTION_HEADING = '## 画面の実装の基本';
 export const hasUiRules = (cfg) => cfg?.uiRules === true;
@@ -230,11 +292,15 @@ const ARCHIVE_SECTION = `## 完了の記録
 - 完了した課題の詳細は \`tasks/archive/YYYY-MM.md\` へ移し、\`tasks/INDEX.md\` に ID の所在を書く。完了ログには、完了日・確認の手順・証跡・判断・反映先を残す。完了した本人確認 (UT) も月ごとの記録へ移す。
 - 過去の課題は、索引から記録へたどる。過去のレビューや生ログの内容を、そのまま現在の仕様として扱わない。`;
 
-function releaseSection(m) {
+function releaseSection(m, cfg) {
   const lines = [
     '- 実装の完了、環境への反映、配布、公開は別々に記録し、それぞれ今回の操作への明示承認を取る。ひと続きの許可と解釈しない。',
-    '- 開発用と本番用で、認証・データ・接続先・秘密情報・ログを分ける。本番のデータを開発用にコピーしない。',
-    '- 本番への反映は、対象・差分・旧版との互換・検証・止める条件・戻し方をそろえてから承認を得る。',
+    ...(hasEnvSplit(cfg)
+      ? [`- 開発用と本番用の扱いは「${ENV_SECTION_NAME}」による。本番への反映では、旧版との互換と止める条件もそろえる。`]
+      : [
+          '- 開発用と本番用で、認証・データ・接続先・秘密情報・ログを分ける。本番のデータを開発用にコピーしない。',
+          '- 本番への反映は、対象・差分・旧版との互換・検証・止める条件・戻し方をそろえてから承認を得る。',
+        ]),
     '- 有料のサービスや試験は、対象・回数や予算・止める条件を決めてから行う。失敗や再試行も回数に数える。',
   ];
   if (!m.solo) {
@@ -250,7 +316,7 @@ export function extendWorkflow(text, cfg) {
   const j = text.indexOf(CHANGE_HEADING);
   if (i < 0 || j < 0 || j < i) throw new Error('WORKFLOW のテンプレートに想定の見出しがありません');
   const sections = [taskSection(m), reviewSection(m), branchSection(m), REPORT_SECTION, SEPARATION_SECTION, skillSection(m)];
-  if (isFull(cfg)) sections.push(FLOW_SECTION, ARCHIVE_SECTION, releaseSection(m));
+  if (isFull(cfg)) sections.push(FLOW_SECTION, ARCHIVE_SECTION, releaseSection(m, cfg));
   const head = useTaskIds(text.slice(0, i))
     .split(`製品説明は ${L.PROJECT}、課題は ${L.TASKS}、検証は ${L.VALIDATION}。`)
     .join(`製品説明は ${L.PROJECT}、この案件の知識は ${L.CONTEXT}、仕様と設計は \`docs/\`、課題は ${L.TASKS}、検証は ${L.VALIDATION}。`)
@@ -305,6 +371,7 @@ export function renderTasksProfile(cfg, meta, { hasHandover = false } = {}) {
   confirm.push('- MVP の課題 (T-003) の対象 (完了条件は T-001 の文書ができてから確定する)');
   confirm.push('- バージョン管理: このフォルダが git 管理でなければ、`.gitignore` の内容を確かめてから git を初期化し、最初のコミットを作る (実行はユーザーの承認後。push はしない)');
   if (launchConfirmLine(cfg)) confirm.push(`- ${launchConfirmLine(cfg)}`);
+  if (envConfirmLine(cfg)) confirm.push(`- ${envConfirmLine(cfg)}`);
   if (hasHandover) confirm.push(`- 導入時の引継ぎ: ${L.START} の「導入時の引継ぎ」の各項目の対応案`);
   const phases = cfg.phases.length
     ? cfg.phases.map((p, i) => `### 段階${i + 1}\n\n段階名 (ユーザー入力の引用):\n\n> ${oneLine(p)}\n\n(この段階の課題は、主導担当が T-xxx として発行する)`).join('\n\n')
@@ -455,7 +522,7 @@ export function extendMinimalTasks(text) {
 // ---------- CONTEXT.md (この案件の知識。ウィザードは中身を書かない) ----------
 export function renderContext(cfg) {
   const blank = '(未記入)';
-  const ui = hasUiRules(cfg) ? `\n${UI_CONTEXT_HEADING}\n\n${blank}\n` : '';
+  const ui = (hasUiRules(cfg) ? `\n${UI_CONTEXT_HEADING}\n\n${blank}\n` : '') + (hasEnvSplit(cfg) ? `\n${ENV_CONTEXT_HEADING}\n\n${blank}\n` : '');
   return `# ${CONTEXT_FILE_NAME} — この案件の知識
 
 <!-- psw:context -->

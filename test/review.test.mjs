@@ -188,7 +188,7 @@ test('7. questions は要約表示の前に検証し、秘密らしい回答は�
   const chunks = [];
   const output = { write: (s) => chunks.push(String(s)) };
   const p = askQuestions({ input, output });
-  input.end(['App', `目的 ${secret}`, 'MVP', '', '', '', '', 'codex-led', 'manual', '', '', '', '', '', '', 'yes'].join('\n') + '\n');
+  input.end(['App', `目的 ${secret}`, 'MVP', 'company', '', '', '', '', 'codex-led', 'manual', '', '', '', '', '', '', 'yes'].join('\n') + '\n');
   const r = await p;
   assert.equal(r.confirmed, false);
   assert.ok(r.error);

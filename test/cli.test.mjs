@@ -117,11 +117,12 @@ test('questions --unattended は質問せず要確認を記録して 2', async (
 
 test('questions 対話: 回答→要約→yes で JSON 保存、no なら保存しない', async () => {
   const out = path.join(tmp, 'q-yes.json');
-  const answers = ['MyApp', '目的です', 'MVPです', '', '段階1', '', '', '', 'claude-solo', '', '', 'src/', '', '', 'yes'].join('\n') + '\n';
+  const answers = ['MyApp', '目的です', 'MVPです', 'personal', '', '段階1', '', '', '', 'claude-solo', '', '', 'src/', '', '', 'yes'].join('\n') + '\n';
   const r = await cli(['questions', '--out', out], answers);
   assert.equal(r.code, 0, r.stdout + r.stderr);
   const saved = JSON.parse(readText(out));
   assert.equal(saved.mode, 'claude-solo');
+  assert.equal(saved.audience, 'personal');
   assert.deepEqual(saved.phases, ['段階1']);
   assert.deepEqual(saved.permissions.allowedPaths, ['src/']);
   const outNo = path.join(tmp, 'q-no.json');
